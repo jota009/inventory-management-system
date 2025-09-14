@@ -27,7 +27,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             category TEXT NOT NULL,
-            currently_quantity INTEGER NOT NULL DEFAULT 0,
+            current_quantity INTEGER NOT NULL DEFAULT 0,
             minimum_threshold INTEGER NOT NULL DEFAULT 0,
             unit TEXT NOT NULL DEFAULT 'pieces',
             supplier TEXT,
@@ -73,7 +73,7 @@ def get_item_by_id(item_id):
 def get_low_stock_items():
     conn = get_db_connection()
     items = conn.execute(
-        'SELECT * FROM inventory WHERE currently_quantity <= minimum_threshold ORDER BY name'
+        'SELECT * FROM inventory WHERE current_quantity <= minimum_threshold ORDER BY name'
     ).fetchall()
     conn.close()
     return items
