@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Add Item - Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-plus"></i> Add New Inventory Item</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Item Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., HP Toner Cartridge">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">Category *</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Toner & Ink">Toner & Ink</option>
+                                <option value="Paper & Media">Paper & Media</option>
+                                <option value="Machine Oil">Machine Oil</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Tools">Tools</option>
+                                <option value="Cleaning Supplies">Cleaning Supplies</option>
+                                <option value="Spare Parts">Spare Parts</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="current_quantity" class="form-label">Current Quantity *</label>
+                            <input type="number" class="form-control" id="current_quantity" name="current_quantity" min="0" required value="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="minimum_threshold" class="form-label">Minimum Threshold *</label>
+                            <input type="number" class="form-control" id="minimum_threshold" name="minimum_threshold" min="0" required value="5">
+                            <div class="form-text">Alert when stock reaches this level</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="unit" class="form-label">Unit</label>
+                            <select class="form-select" id="unit" name="unit">
+                                <option value="pieces">Pieces</option>
+                                <option value="bottles">Bottles</option>
+                                <option value="cartridges">Cartridges</option>
+                                <option value="liters">Liters</option>
+                                <option value="gallons">Gallons</option>
+                                <option value="boxes">Boxes</option>
+                                <option value="packs">Packs</option>
+                                <option value="rolls">Rolls</option>
+                                <option value="sheets">Sheets</option>
+                                <option value="kg">Kilograms</option>
+                                <option value="lbs">Pounds</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="supplier" class="form-label">Supplier</label>
+                        <input type="text" class="form-control" id="supplier" name="supplier" placeholder="e.g., Office Depot, Staples">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Additional information, part numbers, specifications, etc."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Add Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Allow custom category input
+document.getElementById('category').addEventListener('change', function() {
+    if (this.value === 'Other') {
+        const customInput = document.createElement('input');
+        customInput.type = 'text';
+        customInput.className = 'form-control mt-2';
+        customInput.name = 'category';
+        customInput.placeholder = 'Enter custom category';
+        customInput.required = true;
+        this.parentNode.appendChild(customInput);
+        this.name = '';
+    }
+});
+</script>
+{% endblock %}
