@@ -21,7 +21,7 @@ def init_db():
     c = conn.cursor()
 
 
-    # Create iventory table
+    # Create inventory table
     c.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,8 +66,8 @@ def get_all_items():
 
 def get_item_by_id(item_id):
     conn = get_db_connection()
-    item = conn.execute('SELECT * FROM inventory WHERE id = ?', (item_id,)).fetchone
-    conn.close
+    item = conn.execute('SELECT * FROM inventory WHERE id = ?', (item_id,)).fetchone()
+    conn.close()
     return item
 
 def get_low_stock_items():
@@ -80,7 +80,7 @@ def get_low_stock_items():
 
 def update_item_quantity(item_id, new_quantity):
     conn = get_db_connection()
-    conn.execute('UPDATE iventory SET current_quantity = ?, last_updated = ?, WHERE id = ?',
+    conn.execute('UPDATE inventory SET current_quantity = ?, last_updated = ? WHERE id = ?',
                 (new_quantity, datetime.now(), item_id)
     )
     conn.commit()
