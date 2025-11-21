@@ -3,6 +3,88 @@
 {% block title %}Dashboard - Printing Facility Inventory{% endblock %}
 
 {% block content %}
+<!-- ========================================
+     CUSTOM STYLES FOR QUICK ADD SECTION
+     These styles make the category buttons look better and more interactive
+     ======================================== -->
+<style>
+    /* 
+     * Style for Quick Add category buttons
+     * These are the buttons in the "Quick Add Materials" section
+     */
+    .quick-add-btn {
+        /* Add some padding inside the buttons */
+        padding: 15px 10px;
+        
+        /* Set minimum height so all buttons are same size */
+        min-height: 80px;
+        
+        /* Make text bold for better readability */
+        font-weight: 500;
+        
+        /* Add smooth transition effect when hovering or clicking */
+        /* transition: property duration timing-function */
+        transition: all 0.3s ease;
+        
+        /* Align content in the center */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* 
+     * Hover effect - changes appearance when mouse is over the button
+     * This gives user feedback that the button is interactive
+     */
+    .quick-add-btn:hover {
+        /* Scale up the button slightly (1.05 = 5% larger) */
+        transform: translateY(-2px);
+        
+        /* Add a subtle shadow effect */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    /*
+     * Active effect - changes appearance when button is being clicked
+     * This gives user feedback that their click was registered
+     */
+    .quick-add-btn:active {
+        /* Scale down slightly when clicked */
+        transform: translateY(0px);
+        
+        /* Reduce shadow when pressed */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /*
+     * Style for the icons inside the Quick Add buttons
+     * Makes them larger and adds spacing
+     */
+    .quick-add-btn i {
+        /* Make icons bigger */
+        font-size: 1.5rem;
+        
+        /* Add space below the icon (before the text) */
+        margin-bottom: 5px;
+    }
+    
+    /*
+     * Style for the small text in the buttons (category name)
+     * Ensures it wraps nicely and stays centered
+     */
+    .quick-add-btn small {
+        /* Allow text to wrap to multiple lines if needed */
+        white-space: normal;
+        
+        /* Center the text */
+        text-align: center;
+        
+        /* Make font slightly bigger than default 'small' */
+        font-size: 0.85rem;
+    }
+</style>
+
 <div class="row mb-4">
     <div class="col-md-8">
         <h1><i class="fas fa-tachometer-alt"></i> Inventory Dashboard</h1>
@@ -62,6 +144,106 @@
                         <i class="fas fa-layer-group fa-2x"></i>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
+     QUICK ADD MATERIALS SECTION
+     This section allows users to quickly add items by clicking on preset category buttons
+     Each button opens a modal with the category pre-selected
+     ======================================== -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Add Materials</h5>
+        <small class="text-muted">Click a category to quickly add a new item</small>
+    </div>
+    <div class="card-body">
+        <!-- Bootstrap grid layout: Creates a responsive grid of buttons -->
+        <div class="row g-2">
+            
+            <!-- TONER & INK BUTTON -->
+            <!-- col-6 col-md-3: Takes 6 columns (50% width) on mobile, 3 columns (25% width) on medium+ screens -->
+            <div class="col-6 col-md-3">
+                <!-- data-category: Custom attribute that stores the category name for JavaScript to use -->
+                <!-- onclick: JavaScript function that will run when button is clicked -->
+                <button class="btn btn-outline-primary w-100 quick-add-btn" 
+                        data-category="Toner & Ink"
+                        onclick="openQuickAddModal('Toner & Ink')">
+                    <i class="fas fa-fill-drip"></i><br>
+                    <small>Toner & Ink</small>
+                </button>
+            </div>
+
+            <!-- PAPER & MEDIA BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-success w-100 quick-add-btn" 
+                        data-category="Paper & Media"
+                        onclick="openQuickAddModal('Paper & Media')">
+                    <i class="fas fa-scroll"></i><br>
+                    <small>Paper & Media</small>
+                </button>
+            </div>
+
+            <!-- MACHINE OIL BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-warning w-100 quick-add-btn" 
+                        data-category="Machine Oil"
+                        onclick="openQuickAddModal('Machine Oil')">
+                    <i class="fas fa-oil-can"></i><br>
+                    <small>Machine Oil</small>
+                </button>
+            </div>
+
+            <!-- MAINTENANCE BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-info w-100 quick-add-btn" 
+                        data-category="Maintenance"
+                        onclick="openQuickAddModal('Maintenance')">
+                    <i class="fas fa-tools"></i><br>
+                    <small>Maintenance</small>
+                </button>
+            </div>
+
+            <!-- TOOLS BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-secondary w-100 quick-add-btn" 
+                        data-category="Tools"
+                        onclick="openQuickAddModal('Tools')">
+                    <i class="fas fa-wrench"></i><br>
+                    <small>Tools</small>
+                </button>
+            </div>
+
+            <!-- CLEANING SUPPLIES BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-danger w-100 quick-add-btn" 
+                        data-category="Cleaning Supplies"
+                        onclick="openQuickAddModal('Cleaning Supplies')">
+                    <i class="fas fa-spray-can"></i><br>
+                    <small>Cleaning Supplies</small>
+                </button>
+            </div>
+
+            <!-- SPARE PARTS BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-dark w-100 quick-add-btn" 
+                        data-category="Spare Parts"
+                        onclick="openQuickAddModal('Spare Parts')">
+                    <i class="fas fa-cog"></i><br>
+                    <small>Spare Parts</small>
+                </button>
+            </div>
+
+            <!-- OTHER BUTTON -->
+            <div class="col-6 col-md-3">
+                <button class="btn btn-outline-secondary w-100 quick-add-btn" 
+                        data-category="Other"
+                        onclick="openQuickAddModal('Other')">
+                    <i class="fas fa-box"></i><br>
+                    <small>Other</small>
+                </button>
             </div>
         </div>
     </div>
@@ -200,6 +382,160 @@
     </div>
 </div>
 
+<!-- ========================================
+     QUICK ADD MODAL
+     This is a Bootstrap modal (popup window) that appears when a category button is clicked
+     It contains a form to add a new inventory item with the category pre-selected
+     ======================================== -->
+<div class="modal fade" id="quickAddModal" tabindex="-1" aria-labelledby="quickAddModalLabel" aria-hidden="true">
+    <!-- modal-dialog: Bootstrap class that centers the modal on screen -->
+    <!-- modal-lg: Makes the modal large (wider than default) -->
+    <div class="modal-dialog modal-lg">
+        <!-- modal-content: Container for the modal's contents -->
+        <div class="modal-content">
+            
+            <!-- MODAL HEADER -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickAddModalLabel">
+                    <i class="fas fa-plus-circle"></i> Quick Add Item
+                </h5>
+                <!-- Close button (X) in the top-right corner -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- MODAL BODY - Contains the form -->
+            <div class="modal-body">
+                <!-- Form will submit to /add_item route using POST method -->
+                <!-- This reuses the existing backend functionality -->
+                <form method="POST" action="{{ url_for('add_item') }}" id="quickAddForm">
+                    
+                    <!-- ROW 1: Item Name and Category -->
+                    <div class="row">
+                        <!-- Item Name Input -->
+                        <div class="col-md-6 mb-3">
+                            <label for="quick_name" class="form-label">Item Name *</label>
+                            <!-- required: HTML5 validation - form won't submit if empty -->
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="quick_name" 
+                                   name="name" 
+                                   required 
+                                   placeholder="e.g., HP Toner Cartridge"
+                                   autocomplete="off">
+                        </div>
+
+                        <!-- Category Display (Read-only) -->
+                        <div class="col-md-6 mb-3">
+                            <label for="quick_category_display" class="form-label">Category *</label>
+                            <!-- This shows the selected category but is disabled so user can't edit it -->
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="quick_category_display" 
+                                   disabled 
+                                   placeholder="Selected category">
+                            <!-- Hidden input that actually submits the category value -->
+                            <!-- The disabled input above is just for display -->
+                            <input type="hidden" 
+                                   id="quick_category" 
+                                   name="category">
+                        </div>
+                    </div>
+
+                    <!-- ROW 2: Quantities and Unit -->
+                    <div class="row">
+                        <!-- Current Quantity Input -->
+                        <div class="col-md-4 mb-3">
+                            <label for="quick_quantity" class="form-label">Current Quantity *</label>
+                            <!-- type="number": Only allows numeric input -->
+                            <!-- min="0": Prevents negative numbers -->
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="quick_quantity" 
+                                   name="current_quantity" 
+                                   min="0" 
+                                   required 
+                                   value="0">
+                        </div>
+
+                        <!-- Minimum Threshold Input -->
+                        <div class="col-md-4 mb-3">
+                            <label for="quick_threshold" class="form-label">Minimum Threshold *</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="quick_threshold" 
+                                   name="minimum_threshold" 
+                                   min="0" 
+                                   required 
+                                   value="5">
+                            <!-- form-text: Bootstrap class for helper text -->
+                            <div class="form-text">Alert when stock reaches this level</div>
+                        </div>
+
+                        <!-- Unit Selector -->
+                        <div class="col-md-4 mb-3">
+                            <label for="quick_unit" class="form-label">Unit *</label>
+                            <!-- Dropdown menu with common units for printing facilities -->
+                            <select class="form-select" id="quick_unit" name="unit" required>
+                                <option value="pieces">Pieces</option>
+                                <option value="bottles">Bottles</option>
+                                <option value="cartridges">Cartridges</option>
+                                <option value="liters">Liters</option>
+                                <option value="gallons">Gallons</option>
+                                <option value="boxes">Boxes</option>
+                                <option value="packs">Packs</option>
+                                <option value="rolls">Rolls</option>
+                                <option value="sheets">Sheets</option>
+                                <option value="kg">Kilograms</option>
+                                <option value="lbs">Pounds</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ROW 3: Supplier -->
+                    <div class="mb-3">
+                        <label for="quick_supplier" class="form-label">Supplier</label>
+                        <!-- Optional field - not required -->
+                        <input type="text" 
+                               class="form-control" 
+                               id="quick_supplier" 
+                               name="supplier" 
+                               placeholder="e.g., Office Depot, Staples"
+                               autocomplete="off">
+                    </div>
+
+                    <!-- ROW 4: Notes -->
+                    <div class="mb-3">
+                        <label for="quick_notes" class="form-label">Notes</label>
+                        <!-- textarea: Multi-line text input -->
+                        <!-- rows="3": Shows 3 lines of text by default -->
+                        <textarea class="form-control" 
+                                  id="quick_notes" 
+                                  name="notes" 
+                                  rows="3" 
+                                  placeholder="Additional information, part numbers, specifications, etc."></textarea>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- MODAL FOOTER - Contains action buttons -->
+            <div class="modal-footer">
+                <!-- Cancel Button - closes modal without submitting -->
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                
+                <!-- Submit Button - triggers form submission -->
+                <!-- onclick: Calls JavaScript function to submit the form -->
+                <button type="button" class="btn btn-primary" onclick="submitQuickAddForm()">
+                    <i class="fas fa-save"></i> Add Item
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <script>
     // Search and filter functionality
     document.addEventListener('DOMContentLoaded', function() {
@@ -244,5 +580,91 @@
 
     // Refresh every 60 seconds
     setInterval(refreshLowStockBadge, 60000);
+
+    // ========================================
+    // QUICK ADD MODAL FUNCTIONS
+    // These functions handle opening the modal and submitting the form
+    // ========================================
+
+    /**
+     * Opens the Quick Add modal and pre-fills the category field
+     * 
+     * @param {string} category - The category name to pre-select (e.g., "Toner & Ink")
+     * 
+     * How it works:
+     * 1. Gets references to the form elements using document.getElementById()
+     * 2. Sets both the display field (for user to see) and hidden field (for form submission)
+     * 3. Creates a Bootstrap modal object and shows it
+     * 4. Focuses on the name input so user can start typing immediately
+     */
+    function openQuickAddModal(category) {
+        // Get the display input element (the one user sees)
+        const categoryDisplay = document.getElementById('quick_category_display');
+        // Get the hidden input element (the one that gets submitted with the form)
+        const categoryHidden = document.getElementById('quick_category');
+        
+        // Set the value of both fields to the selected category
+        categoryDisplay.value = category;
+        categoryHidden.value = category;
+        
+        // Create a Bootstrap Modal object
+        // 'quickAddModal' is the ID of the modal div we created above
+        const modal = new bootstrap.Modal(document.getElementById('quickAddModal'));
+        
+        // Show the modal (makes it appear on screen with fade-in animation)
+        modal.show();
+        
+        // After a short delay (100 milliseconds), focus on the name input field
+        // This allows the user to immediately start typing the item name
+        // The setTimeout is needed because the modal needs time to fully appear first
+        setTimeout(function() {
+            document.getElementById('quick_name').focus();
+        }, 100);
+    }
+
+    /**
+     * Submits the Quick Add form
+     * 
+     * How it works:
+     * 1. Gets a reference to the form element
+     * 2. Checks if all required fields are filled (HTML5 validation)
+     * 3. If valid, submits the form to the /add_item endpoint
+     * 4. If invalid, browser will show validation errors automatically
+     */
+    function submitQuickAddForm() {
+        // Get the form element by its ID
+        const form = document.getElementById('quickAddForm');
+        
+        // Check if form is valid using HTML5 validation
+        // This checks all 'required' fields and input types (like number, email, etc.)
+        if (form.checkValidity()) {
+            // If valid, submit the form
+            // This will send a POST request to /add_item with all the form data
+            form.submit();
+        } else {
+            // If not valid, trigger the browser's built-in validation messages
+            // This will show error messages next to invalid fields
+            form.reportValidity();
+        }
+    }
+
+    /**
+     * Reset the Quick Add form when modal is closed
+     * 
+     * This event listener "listens" for when the modal is hidden
+     * When it detects the modal closing, it resets all form fields to their defaults
+     * This ensures a clean slate for the next time the modal is opened
+     */
+    document.getElementById('quickAddModal').addEventListener('hidden.bs.modal', function () {
+        // Get the form element
+        const form = document.getElementById('quickAddForm');
+        
+        // Reset all form fields to their default values
+        // This clears text inputs and resets selects/checkboxes
+        form.reset();
+        
+        // Also clear the category display field (since it's disabled, reset() doesn't affect it)
+        document.getElementById('quick_category_display').value = '';
+    });
 </script>
 {% endblock %}
