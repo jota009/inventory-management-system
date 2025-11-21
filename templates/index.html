@@ -587,25 +587,33 @@
     // ========================================
 
     /**
-     * Opens the Quick Add modal and pre-fills the category field
+     * Opens the Quick Add modal and pre-fills the category and name fields
      *
      * @param {string} category - The category name to pre-select (e.g., "Toner & Ink")
      *
      * How it works:
      * 1. Gets references to the form elements using document.getElementById()
-     * 2. Sets both the display field (for user to see) and hidden field (for form submission)
-     * 3. Creates a Bootstrap modal object and shows it
-     * 4. Focuses on the name input so user can start typing immediately
+     * 2. Sets the category display field and hidden field to the selected category
+     * 3. Auto-fills the Item Name field with the category name for convenience
+     * 4. Creates a Bootstrap modal object and shows it
+     * 5. Focuses and selects the name input so user can easily modify or replace it
      */
     function openQuickAddModal(category) {
-        // Get the display input element (the one user sees)
+        // Get the category display input element (the one user sees)
         const categoryDisplay = document.getElementById('quick_category_display');
         // Get the hidden input element (the one that gets submitted with the form)
         const categoryHidden = document.getElementById('quick_category');
+        // Get the name input field to auto-fill it
+        const nameInput = document.getElementById('quick_name');
 
-        // Set the value of both fields to the selected category
+        // Set the value of both category fields to the selected category
         categoryDisplay.value = category;
         categoryHidden.value = category;
+
+        // Auto-fill the Item Name field with the category name
+        // This saves time - user can keep it as is or modify it
+        // For example: "Toner & Ink" can be modified to "HP Black Toner"
+        nameInput.value = category;
 
         // Create a Bootstrap Modal object
         // 'quickAddModal' is the ID of the modal div we created above
@@ -615,10 +623,16 @@
         modal.show();
 
         // After a short delay (100 milliseconds), focus on the name input field
-        // This allows the user to immediately start typing the item name
+        // and select all the text so user can easily:
+        // - Press a key to replace it entirely, OR
+        // - Click to position cursor and modify it, OR
+        // - Just tab to next field to keep the auto-filled value
         // The setTimeout is needed because the modal needs time to fully appear first
         setTimeout(function() {
-            document.getElementById('quick_name').focus();
+            const nameField = document.getElementById('quick_name');
+            nameField.focus();
+            // Select all text in the field for easy editing
+            nameField.select();
         }, 100);
     }
 
