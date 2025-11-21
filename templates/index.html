@@ -261,6 +261,7 @@
                         <tr>
                             <th>Item Name</th>
                             <th>Category</th>
+                            <th>Subcategory</th>
                             <th>Stock Level</th>
                             <th>Status</th>
                             <th>Unit</th>
@@ -287,6 +288,15 @@
 
                                 <td>
                                     <span class="badge bg-secondary">{{ item.category }}</span>
+                                </td>
+
+                                <!-- NEW: Display subcategory if it exists, otherwise show dash -->
+                                <td>
+                                    {% if item.subcategory %}
+                                        <span class="badge bg-info">{{ item.subcategory }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
                                 </td>
 
                                 <td>
@@ -418,6 +428,30 @@
                             <input type="hidden"
                                    id="quick_category"
                                    name="category">
+                        </div>
+                    </div>
+
+                    <!-- ROW 1.5: Subcategory Dropdown (Only visible for Spare Parts) -->
+                    <!-- This section will be hidden by default and shown only when "Spare Parts" is selected -->
+                    <div class="row" id="subcategory_row" style="display: none;">
+                        <div class="col-md-12 mb-3">
+                            <label for="quick_subcategory" class="form-label">Subcategory *</label>
+                            <!-- Dropdown with common consumable spare parts for printing machines -->
+                            <select class="form-select" id="quick_subcategory" name="subcategory">
+                                <option value="">Select Consumable Type</option>
+                                <option value="Consumables">Consumables (General)</option>
+                                <option value="Fuser Roll">Fuser Roll</option>
+                                <option value="PC Drum">PC Drum (Photoconductor)</option>
+                                <option value="Transfer Roller">Transfer Roller</option>
+                                <option value="Separation Roller">Separation Roller</option>
+                                <option value="Feed Roller">Feed Roller</option>
+                                <option value="Fuser Oil">Fuser Oil</option>
+                                <option value="Developer Unit">Developer Unit</option>
+                                <option value="Waste Toner Bottle">Waste Toner Bottle</option>
+                                <option value="Registration Roller">Registration Roller</option>
+                            </select>
+                            <!-- Helper text to guide the user -->
+                            <div class="form-text">Select the type of consumable spare part</div>
                         </div>
                     </div>
 
@@ -575,8 +609,9 @@
      * 1. Gets references to the form elements using document.getElementById()
      * 2. Sets the category display field and hidden field to the selected category
      * 3. Auto-fills the Item Name field with the category name for convenience
-     * 4. Creates a Bootstrap modal object and shows it
-     * 5. Focuses and selects the name input so user can easily modify or replace it
+     * 4. Shows/hides the subcategory dropdown if "Spare Parts" is selected
+     * 5. Creates a Bootstrap modal object and shows it
+     * 6. Focuses and selects the name input so user can easily modify or replace it
      */
     function openQuickAddModal(category) {
         // Get the category display input element (the one user sees)
@@ -585,6 +620,10 @@
         const categoryHidden = document.getElementById('quick_category');
         // Get the name input field to auto-fill it
         const nameInput = document.getElementById('quick_name');
+        // Get the subcategory row (the container for the subcategory dropdown)
+        const subcategoryRow = document.getElementById('subcategory_row');
+        // Get the subcategory select element
+        const subcategorySelect = document.getElementById('quick_subcategory');
 
         // Set the value of both category fields to the selected category
         categoryDisplay.value = category;
@@ -594,6 +633,24 @@
         // This saves time - user can keep it as is or modify it
         // For example: "Toner & Ink" can be modified to "HP Black Toner"
         nameInput.value = category;
+
+        // Show or hide the subcategory dropdown based on the selected category
+        // Only "Spare Parts" category needs subcategory selection
+        if (category === 'Spare Parts') {
+            // Display the subcategory row
+            subcategoryRow.style.display = 'block';
+            // Make the subcategory field required (user must select one)
+            subcategorySelect.required = true;
+            // Clear the name field for Spare Parts so user enters specific part name
+            nameInput.value = '';
+        } else {
+            // Hide the subcategory row for other categories
+            subcategoryRow.style.display = 'none';
+            // Make the subcategory field optional (not required)
+            subcategorySelect.required = false;
+            // Reset the subcategory dropdown to default
+            subcategorySelect.value = '';
+        }
 
         // Create a Bootstrap Modal object
         // 'quickAddModal' is the ID of the modal div we created above
@@ -659,6 +716,13 @@
 
         // Also clear the category display field (since it's disabled, reset() doesn't affect it)
         document.getElementById('quick_category_display').value = '';
+
+        // Hide the subcategory row and reset the dropdown
+        const subcategoryRow = document.getElementById('subcategory_row');
+        const subcategorySelect = document.getElementById('quick_subcategory');
+        subcategoryRow.style.display = 'none';
+        subcategorySelect.required = false;
+        subcategorySelect.value = '';
     });
 </script>
 {% endblock %}

@@ -20,13 +20,13 @@ def init_db():
     conn = sqlite3.connect('inventory.db')
     c = conn.cursor()
 
-
     # Create inventory table
     c.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             category TEXT NOT NULL,
+            subcategory TEXT,
             current_quantity INTEGER NOT NULL DEFAULT 0,
             minimum_threshold INTEGER NOT NULL DEFAULT 0,
             unit TEXT NOT NULL DEFAULT 'pieces',
@@ -105,8 +105,11 @@ def index():
 @app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
     if request.method == 'POST':
+        # Extract form data
         name = request.form['name']
         category = request.form['category']
+        # Get subcategory from form (optional field - returns empty string if not provided)
+        subcategory = request.form.get('subcategory', '')
         current_quantity = int(request.form['current_quantity'])
         minimum_threshold = int(request.form['minimum_threshold'])
         unit = request.form['unit']
@@ -114,9 +117,10 @@ def add_item():
         notes = request.form['notes']
 
         conn = get_db_connection()
+        # UPDATED: Added subcategory column to INSERT statement
         conn.execute(
-            'INSERT INTO inventory (name, category, current_quantity, minimum_threshold, unit, supplier, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (name, category, current_quantity, minimum_threshold, unit, supplier, notes)
+            'INSERT INTO inventory (name, category, subcategory, current_quantity, minimum_threshold, unit, supplier, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (name, category, subcategory, current_quantity, minimum_threshold, unit, supplier, notes)
         )
         conn.commit()
         conn.close()
@@ -131,8 +135,11 @@ def edit_item(item_id):
     item = get_item_by_id(item_id)
 
     if request.method == 'POST':
+        # Extract form data
         name = request.form['name']
         category = request.form['category']
+        # Get subcategory from form (optional field - returns empty string if not provided)
+        subcategory = request.form.get('subcategory', '')
         current_quantity = int(request.form['current_quantity'])
         minimum_threshold = int(request.form['minimum_threshold'])
         unit = request.form['unit']
@@ -140,9 +147,10 @@ def edit_item(item_id):
         notes = request.form['notes']
 
         conn = get_db_connection()
+        # UPDATED: Added subcategory column to UPDATE statement
         conn.execute(
-            'UPDATE inventory SET name=?, category=?, current_quantity=?, minimum_threshold=?, unit=?, supplier=?, notes=?, last_updated=? WHERE id=?',
-            (name, category, current_quantity, minimum_threshold, unit, supplier, notes, datetime.now(), item_id)
+            'UPDATE inventory SET name=?, category=?, subcategory=?, current_quantity=?, minimum_threshold=?, unit=?, supplier=?, notes=?, last_updated=? WHERE id=?',
+            (name, category, subcategory, current_quantity, minimum_threshold, unit, supplier, notes, datetime.now(), item_id)
         )
         conn.commit()
         conn.close()
