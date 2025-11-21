@@ -54,25 +54,30 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- ========================================
+                     NAVIGATION MENU
+                     Removed "Add Item" link - users now add items via Quick Add on dashboard
+                     ======================================== -->
                 <ul class="navbar-nav me-auto">
+                    <!-- Dashboard Link - Main page with Quick Add feature -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('index') }}">
                             <i class="fas fa-home"></i> Dashboard
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_item') }}">
-                            <i class="fas fa-plus"></i> Add Item
-                        </a>
-                    </li>
+                    
+                    <!-- Low Stock Alert Link - Shows items below minimum threshold -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('low_stock') }}">
                             <i class="fas fa-exclamation-triangle"></i> Low Stock
+                            <!-- Badge shows count of low stock items if any exist -->
                             {% if low_stock_count > 0 %}
                                 <span class="badge bg-warning text-dark">{{ low_stock_count }}</span>
                             {% endif %}
                         </a>
                     </li>
+                    
+                    <!-- Tools Dropdown - Import/Export functionality -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-cog"></i> Tools
