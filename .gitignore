@@ -68,3 +68,9 @@ music/*
 *.mp3
 *.wav
 *.ogg
+
+# Development documentation (personal notes, not for repo)
+systeminstructions.md
+TECHSTACK.md
+
+# Keep README.md in git - it's the main project documentation

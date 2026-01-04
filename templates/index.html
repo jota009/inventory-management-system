@@ -268,6 +268,16 @@
                             <th>Supplier</th>
                             <th>Actions</th>
                         </tr>
+                    <!--
+                        This block defines the start of the inventory table body in the template.
+                        - It iterates over each item in the 'items' collection.
+                        - For each item, it generates a <tr> (table row) and:
+                            - Dynamically assigns a CSS class based on stock status:
+                                - 'out-of-stock' if current_quantity == 0
+                                - 'low-stock' if current_quantity is less than or equal to minimum_threshold
+                                - 'good-stock' otherwise
+                            - Sets 'data-category' and 'data-name' attributes (all lowercase) for client-side searching/filtering.
+                    -->
                     </thead>
                     <tbody>
                         {% for item in items %}
@@ -331,16 +341,28 @@
 
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('use_item', item_id=item.id) }}"
-                                           class="btn btn-outline-primary"
-                                           title="Use Item">
+                                        <!-- USE ITEM BUTTON: Click to decrease quantity by 1 -->
+                                        <!-- Changed from <a href> link to <button onclick> for AJAX functionality -->
+                                        <!-- onclick: Calls JavaScript function useItem() with item details -->
+                                        <!-- data-* attributes: Store item information for JavaScript access -->
+                                        <button class="btn btn-outline-primary use-item-btn"
+                                           title="Use Item"
+                                           type="button"
+                                           data-item-id="{{ item.id }}"
+                                           data-item-name="{{ item.name }}"
+                                           data-item-quantity="{{ item.current_quantity }}"
+                                           data-item-unit="{{ item.unit }}">
                                             <i class="fas fa-minus"></i>
-                                        </a>
+                                        </button>
+
+                                        <!-- EDIT ITEM LINK: Navigate to edit page -->
                                         <a href="{{ url_for('edit_item', item_id=item.id) }}"
                                            class="btn btn-outline-secondary"
                                            title="Edit Item">
                                             <i class="fas fa-edit"></i>
                                         </a>
+
+                                        <!-- DELETE ITEM LINK: Navigate to delete with confirmation -->
                                         <a href="{{ url_for('delete_item', item_id=item.id) }}"
                                            class="btn btn-outline-danger"
                                            title="Delete Item"
@@ -594,6 +616,233 @@
 
     // Refresh every 60 seconds
     setInterval(refreshLowStockBadge, 60000);
+
+    // ========================================
+    // USE ITEM FUNCTION - AJAX ONE-CLICK USAGE
+    // Handles clicking the minus button to decrease item quantity by 1
+    // ========================================
+
+    /**
+     * Use Item - Decrease quantity by 1 via AJAX
+     *
+     * Purpose:
+     *     Allows operators to quickly log usage of an item without leaving the dashboard.
+     *     Sends AJAX POST request to server, updates quantity in database, and refreshes
+     *     the display without reloading the entire page.
+     *
+     * How it works:
+     *     1. User clicks minus button on any item row
+     *     2. Event listener catches the click
+     *     3. Gets item data from button's data-* attributes
+     *     4. Shows confirmation dialog
+     *     5. If confirmed, sends AJAX POST to /use_item/<id>
+     *     6. Server validates, updates database, returns JSON response
+     *     7. JavaScript updates the quantity display in the table
+     *     8. Shows success/error message
+     *
+     * What is AJAX?
+     *     AJAX = Asynchronous JavaScript And XML
+     *     It sends data to the server IN THE BACKGROUND without reloading the page
+     *     Like Gmail checking for new emails without you clicking refresh
+     */
+
+    // Add click event listeners to all "use item" buttons
+    // This runs when the page finishes loading
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find all buttons with class "use-item-btn"
+        // querySelectorAll returns a list of all matching elements
+        const useItemButtons = document.querySelectorAll('.use-item-btn');
+
+        // Loop through each button and add a click event listener
+        // forEach runs the function once for each button
+        useItemButtons.forEach(button => {
+            // addEventListener: "Listen" for clicks on this button
+            // When clicked, run the function inside
+            button.addEventListener('click', function() {
+                // ========================================
+                // STEP 1: Get item data from button attributes
+                // ========================================
+                // data-* attributes were set in the HTML by Jinja2
+                // dataset.itemId gets the value of data-item-id attribute
+                const itemId = this.dataset.itemId;           // e.g., "7"
+                const itemName = this.dataset.itemName;       // e.g., "Toner Cartridge"
+                const currentQty = parseInt(this.dataset.itemQuantity);  // e.g., 10
+                const itemUnit = this.dataset.itemUnit;       // e.g., "pieces"
+
+                // ========================================
+                // STEP 2: Validate current stock
+                // ========================================
+                // Don't allow using an item that's already out of stock
+                if (currentQty <= 0) {
+                    alert('Cannot use item: Out of stock!');
+                    return;  // Exit function early
+                }
+
+                // ========================================
+                // STEP 3: Show confirmation dialog
+                // ========================================
+                // confirm() shows a browser dialog with OK/Cancel buttons
+                // Returns true if user clicks OK, false if Cancel
+                const confirmed = confirm(`Use 1 ${itemUnit} of ${itemName}?\n\nCurrent stock: ${currentQty} ${itemUnit}\nAfter use: ${currentQty - 1} ${itemUnit}`);
+
+                // If user clicked Cancel, stop here
+                if (!confirmed) {
+                    return;  // Exit function without doing anything
+                }
+
+                // ========================================
+                // STEP 4: Send AJAX POST request to server
+                // ========================================
+                // fetch() is the modern JavaScript way to send HTTP requests
+                // It sends the request in the BACKGROUND (asynchronously)
+                fetch(`/use_item/${itemId}`, {
+                    method: 'POST',  // HTTP POST method (for modifying data)
+                    headers: {
+                        'Content-Type': 'application/json'  // Tell server we're sending JSON
+                    },
+                    body: JSON.stringify({})  // Empty body (server knows to use quantity=1)
+                })
+                // ========================================
+                // STEP 5: Handle server response
+                // ========================================
+                // .then() runs AFTER the server responds
+                // "response" contains the server's HTTP response
+                .then(response => {
+                    // Check if response is OK (status code 200-299)
+                    if (!response.ok) {
+                        // If not OK, throw error to trigger .catch() below
+                        throw new Error('Server returned error status');
+                    }
+                    // Parse JSON response body
+                    // This converts JSON text to a JavaScript object
+                    return response.json();
+                })
+                // This .then() runs AFTER the JSON is parsed
+                // "data" is the JavaScript object from the server's JSON response
+                .then(data => {
+                    // Check if server reports success
+                    if (data.success) {
+                        // ========================================
+                        // SUCCESS: Update the page
+                        // ========================================
+
+                        // Find the table row for this item
+                        // closest('tr') finds the nearest <tr> ancestor element
+                        const row = button.closest('tr');
+
+                        // Find the quantity display element in this row
+                        // querySelector finds the first element matching the selector
+                        const qtyElement = row.querySelector('td:nth-child(4) strong');
+
+                        // Update the displayed quantity with new value from server
+                        if (qtyElement) {
+                            qtyElement.textContent = data.new_quantity;
+                        }
+
+                        // Update the status badge color based on new quantity
+                        updateStatusBadge(row, data.new_quantity, itemId);
+
+                        // Show success message to user
+                        showMessage(data.message, 'success');
+
+                        // Refresh the low stock badge in navbar
+                        refreshLowStockBadge();
+
+                        // Update the button's data attribute for next click
+                        button.dataset.itemQuantity = data.new_quantity;
+                    } else {
+                        // ========================================
+                        // FAILURE: Show error message
+                        // ========================================
+                        showMessage(data.message || 'Failed to use item', 'error');
+                    }
+                })
+                // .catch() runs if ANY error occurs above
+                // "error" contains information about what went wrong
+                .catch(error => {
+                    console.error('Error using item:', error);
+                    showMessage('Failed to use item. Please try again.', 'error');
+                });
+            });
+        });
+    });
+
+    /**
+     * Update Status Badge
+     *
+     * Updates the status badge (In Stock / Low Stock / Out of Stock)
+     * based on the new quantity after usage
+     */
+    function updateStatusBadge(row, newQuantity, itemId) {
+        // Find the status badge in this row
+        const statusBadge = row.querySelector('td:nth-child(5) .badge');
+
+        if (!statusBadge) return;  // Exit if badge not found
+
+        // Get minimum threshold from data (we'll need to add this to the HTML)
+        // For now, we'll update the badge based on quantity
+        if (newQuantity === 0) {
+            // Out of stock - red badge
+            statusBadge.className = 'badge bg-danger status-badge';
+            statusBadge.textContent = 'Out of Stock';
+
+            // Also update row background color
+            row.className = row.className.replace('low-stock', 'out-of-stock').replace('good-stock', 'out-of-stock');
+            if (!row.className.includes('out-of-stock')) {
+                row.className += ' out-of-stock';
+            }
+        }
+        // Note: For accurate low stock detection, we'd need the minimum_threshold
+        // This is a simplified version
+    }
+
+    /**
+     * Show Message
+     *
+     * Displays a flash-style message at the top of the page
+     * Similar to Flask flash messages but without page reload
+     *
+     * @param {string} message - The message text to display
+     * @param {string} type - Message type: 'success' or 'error'
+     */
+    function showMessage(message, type) {
+        // Get the container where messages should appear
+        const container = document.querySelector('.container.mt-4');
+
+        if (!container) return;  // Exit if container not found
+
+        // Create a new div element for the message
+        const alertDiv = document.createElement('div');
+
+        // Set CSS classes for Bootstrap styling
+        // 'alert' = Bootstrap alert box
+        // 'alert-success' or 'alert-danger' = green or red color
+        // 'alert-dismissible' = allows closing with X button
+        // 'fade show' = fade-in animation
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+
+        // Set the role for accessibility (screen readers)
+        alertDiv.setAttribute('role', 'alert');
+
+        // Set the inner HTML of the alert
+        // Includes the message text and a close button
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        // Insert the alert at the top of the container
+        // insertBefore: Insert before the first child element
+        container.insertBefore(alertDiv, container.firstChild);
+
+        // Automatically remove the alert after 5 seconds
+        // setTimeout: Run a function after a delay (in milliseconds)
+        setTimeout(() => {
+            // Bootstrap's Alert class has a close() method
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000);  // 5000 milliseconds = 5 seconds
+    }
 
     // ========================================
     // QUICK ADD MODAL FUNCTIONS

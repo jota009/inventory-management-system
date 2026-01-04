@@ -160,26 +160,103 @@ def edit_item(item_id):
 
     return render_template('edit_item.html', item=item)
 
-@app.route('/use_item/<int:item_id>', methods=['GET', 'POST'])
+@app.route('/use_item/<int:item_id>', methods=['POST'])
 def use_item(item_id):
+    """
+    Use Item Route - AJAX Endpoint
+
+    Purpose:
+        Handles one-click usage of inventory items via AJAX POST request.
+        Decreases item quantity by 1 and logs the usage to history.
+
+    How it works:
+        1. Receives POST request with item_id in URL
+        2. Gets current item data from database
+        3. Validates that item has stock available (current_quantity > 0)
+        4. If valid:
+           - Decreases quantity by 1
+           - Updates inventory table
+           - Records usage in usage_history table
+           - Returns JSON success response
+        5. If invalid:
+           - Returns JSON error response
+
+    Returns:
+        JSON object with format:
+        {
+            "success": true/false,
+            "new_quantity": <number>,      (only if success)
+            "message": "<user message>",
+            "item_name": "<name>",         (only if success)
+            "item_id": <id>                (only if success)
+        }
+
+    Usage:
+        Called from JavaScript AJAX in index.html when user clicks minus button
+    """
+    # Get the item from database
     item = get_item_by_id(item_id)
 
-    if request.method == 'POST':
-        quantity_used = int(request.form['quantity_used'])
-        notes = request.form.get('notes', '')
+    # Check if item exists
+    if not item:
+        return jsonify({
+            'success': False,
+            'message': 'Item not found'
+        }), 404
 
-        if quantity_used > item['current_quantity']:
-            flash('Cannot use more items than available in stock!', 'error')
-            return render_template('use_item.html', item=item)
+    # Fixed quantity for one-click usage (always 1)
+    quantity_used = 1
 
-        new_quantity = item['current_quantity'] - quantity_used
-        update_item_quantity(item_id, new_quantity)
-        record_usage(item_id, quantity_used, new_quantity, notes)
+    # Optional notes from AJAX request (empty string if not provided)
+    # This allows future enhancement for adding notes
+    notes = request.json.get('notes', '') if request.is_json else ''
 
-        flash(f'Used {quantity_used} {item["unit"]} of {item["name"]}. Remaining: {new_quantity}', 'success')
-        return redirect(url_for('index'))
+    # ========================================
+    # VALIDATION: Check if enough stock available
+    # ========================================
+    if quantity_used > item['current_quantity']:
+        # Not enough stock - return error response
+        return jsonify({
+            'success': False,
+            'message': f'Cannot use item: only {item["current_quantity"]} {item["unit"]} available!'
+        }), 400
 
-    return render_template('use_item.html', item=item)
+    # If stock is zero, also reject (edge case)
+    if item['current_quantity'] == 0:
+        return jsonify({
+            'success': False,
+            'message': 'Cannot use item: out of stock!'
+        }), 400
+
+    # ========================================
+    # UPDATE INVENTORY
+    # ========================================
+    # Calculate new quantity after usage
+    # Example: If current is 10 and we use 1, new quantity is 9
+    new_quantity = item['current_quantity'] - quantity_used
+
+    # Update the inventory table with new quantity
+    # This also updates the last_updated timestamp
+    update_item_quantity(item_id, new_quantity)
+
+    # ========================================
+    # RECORD USAGE HISTORY
+    # ========================================
+    # Log this usage event to the usage_history table
+    # This keeps track of when items were used for reporting/auditing
+    record_usage(item_id, quantity_used, new_quantity, notes)
+
+    # ========================================
+    # RETURN SUCCESS RESPONSE
+    # ========================================
+    # Return JSON response that JavaScript will use to update the page
+    return jsonify({
+        'success': True,
+        'new_quantity': new_quantity,
+        'message': f'Used {quantity_used} {item["unit"]} of {item["name"]}. Remaining: {new_quantity}',
+        'item_name': item['name'],
+        'item_id': item_id
+    }), 200
 
 @app.route('/low_stock')
 def low_stock():
