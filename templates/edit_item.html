@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Edit Item - Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Inventory Item</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Item Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   value="{{ item.name }}" placeholder="e.g., HP Toner Cartridge">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">Category *</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Toner & Ink" {% if item.category == 'Toner & Ink' %}selected{% endif %}>Toner & Ink</option>
+                                <option value="Paper & Media" {% if item.category == 'Paper & Media' %}selected{% endif %}>Paper & Media</option>
+                                <option value="Machine Oil" {% if item.category == 'Machine Oil' %}selected{% endif %}>Machine Oil</option>
+                                <option value="Maintenance" {% if item.category == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+                                <option value="Tools" {% if item.category == 'Tools' %}selected{% endif %}>Tools</option>
+                                <option value="Cleaning Supplies" {% if item.category == 'Cleaning Supplies' %}selected{% endif %}>Cleaning Supplies</option>
+                                <option value="Spare Parts" {% if item.category == 'Spare Parts' %}selected{% endif %}>Spare Parts</option>
+                                <option value="Other" {% if item.category == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row" id="subcategory_row" style="{% if item.category != 'Spare Parts' %}display: none;{% endif %}">
+                        <div class="col-md-12 mb-3">
+                            <label for="subcategory" class="form-label">Subcategory {% if item.category == 'Spare Parts' %}*{% endif %}</label>
+                            <select class="form-select" id="subcategory" name="subcategory" {% if item.category == 'Spare Parts' %}required{% endif %}>
+                                <option value="">Select Consumable Type</option>
+                                <option value="Consumables" {% if item.subcategory == 'Consumables' %}selected{% endif %}>Consumables (General)</option>
+                                <option value="Fuser Roll" {% if item.subcategory == 'Fuser Roll' %}selected{% endif %}>Fuser Roll</option>
+                                <option value="PC Drum" {% if item.subcategory == 'PC Drum' %}selected{% endif %}>PC Drum (Photoconductor)</option>
+                                <option value="Transfer Roller" {% if item.subcategory == 'Transfer Roller' %}selected{% endif %}>Transfer Roller</option>
+                                <option value="Separation Roller" {% if item.subcategory == 'Separation Roller' %}selected{% endif %}>Separation Roller</option>
+                                <option value="Feed Roller" {% if item.subcategory == 'Feed Roller' %}selected{% endif %}>Feed Roller</option>
+                                <option value="Fuser Oil" {% if item.subcategory == 'Fuser Oil' %}selected{% endif %}>Fuser Oil</option>
+                                <option value="Developer Unit" {% if item.subcategory == 'Developer Unit' %}selected{% endif %}>Developer Unit</option>
+                                <option value="Waste Toner Bottle" {% if item.subcategory == 'Waste Toner Bottle' %}selected{% endif %}>Waste Toner Bottle</option>
+                                <option value="Registration Roller" {% if item.subcategory == 'Registration Roller' %}selected{% endif %}>Registration Roller</option>
+                            </select>
+                            <div class="form-text">Select the type of consumable spare part</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="current_quantity" class="form-label">Current Quantity *</label>
+                            <input type="number" class="form-control" id="current_quantity" name="current_quantity" 
+                                   min="0" required value="{{ item.current_quantity }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="minimum_threshold" class="form-label">Minimum Threshold *</label>
+                            <input type="number" class="form-control" id="minimum_threshold" name="minimum_threshold" 
+                                   min="0" required value="{{ item.minimum_threshold }}">
+                            <div class="form-text">Alert when stock reaches this level</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="unit" class="form-label">Unit</label>
+                            <select class="form-select" id="unit" name="unit">
+                                <option value="pieces" {% if item.unit == 'pieces' %}selected{% endif %}>Pieces</option>
+                                <option value="bottles" {% if item.unit == 'bottles' %}selected{% endif %}>Bottles</option>
+                                <option value="cartridges" {% if item.unit == 'cartridges' %}selected{% endif %}>Cartridges</option>
+                                <option value="liters" {% if item.unit == 'liters' %}selected{% endif %}>Liters</option>
+                                <option value="gallons" {% if item.unit == 'gallons' %}selected{% endif %}>Gallons</option>
+                                <option value="boxes" {% if item.unit == 'boxes' %}selected{% endif %}>Boxes</option>
+                                <option value="packs" {% if item.unit == 'packs' %}selected{% endif %}>Packs</option>
+                                <option value="rolls" {% if item.unit == 'rolls' %}selected{% endif %}>Rolls</option>
+                                <option value="sheets" {% if item.unit == 'sheets' %}selected{% endif %}>Sheets</option>
+                                <option value="kg" {% if item.unit == 'kg' %}selected{% endif %}>Kilograms</option>
+                                <option value="lbs" {% if item.unit == 'lbs' %}selected{% endif %}>Pounds</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="supplier" class="form-label">Supplier</label>
+                        <input type="text" class="form-control" id="supplier" name="supplier" 
+                               value="{{ item.supplier or '' }}" placeholder="e.g., Office Depot, Staples">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Additional information, part numbers, specifications, etc.">{{ item.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted">Last updated: {{ item.last_updated }}</small>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide subcategory dropdown based on category selection
+document.getElementById('category').addEventListener('change', function() {
+    const subcategoryRow = document.getElementById('subcategory_row');
+    const subcategorySelect = document.getElementById('subcategory');
+    
+    if (this.value === 'Spare Parts') {
+        subcategoryRow.style.display = 'block';
+        subcategorySelect.required = true;
+    } else {
+        subcategoryRow.style.display = 'none';
+        subcategorySelect.required = false;
+        subcategorySelect.value = '';
+    }
+});
+
+// Allow custom category input
+document.getElementById('category').addEventListener('change', function() {
+    if (this.value === 'Other') {
+        const customInput = document.createElement('input');
+        customInput.type = 'text';
+        customInput.className = 'form-control mt-2';
+        customInput.name = 'category';
+        customInput.placeholder = 'Enter custom category';
+        customInput.required = true;
+        customInput.value = '{{ item.category }}';
+        this.parentNode.appendChild(customInput);
+        this.name = '';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Low Stock Items - Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-exclamation-triangle text-warning"></i> Low Stock Alert</h1>
+        <p class="text-muted">Items at or below minimum threshold levels</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Alert Summary Card -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-bell text-warning"></i> 
+                            {% if items %}
+                                {{ items|length }} item{% if items|length != 1 %}s{% endif %} need attention
+                            {% else %}
+                                All items are adequately stocked
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted mb-0 mt-2">
+                            {% if items %}
+                                Please reorder or restock these items as soon as possible
+                            {% else %}
+                                No items are currently below their minimum threshold
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        {% if items %}
+                            <a href="{{ url_for('export_csv') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-download"></i> Export List
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Items Table -->
+{% if items %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list"></i> Items Requiring Attention</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Priority</th>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Stock Level</th>
+                            <th>Status</th>
+                            <th>Unit</th>
+                            <th>Supplier</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                            <tr class="{% if item.current_quantity == 0 %}out-of-stock{% else %}low-stock{% endif %}">
+                                <td>
+                                    {% if item.current_quantity == 0 %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-circle"></i> URGENT
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-exclamation-triangle"></i> LOW
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <strong>{{ item.name }}</strong>
+                                    {% if item.notes %}
+                                        <br><small class="text-muted">{{ item.notes[:50] }}{% if item.notes|length > 50 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <span class="badge bg-secondary">{{ item.category }}</span>
+                                </td>
+                                
+                                <td>
+                                    {% if item.subcategory %}
+                                        <span class="badge bg-info">{{ item.subcategory }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">
+                                            <strong class="{% if item.current_quantity == 0 %}text-danger{% else %}text-warning{% endif %}">
+                                                {{ item.current_quantity }}
+                                            </strong> 
+                                            / {{ item.minimum_threshold }}
+                                        </span>
+                                        <div class="progress" style="width: 60px; height: 8px;">
+                                            {% set percentage = ((item.current_quantity / (item.minimum_threshold * 2)) * 100) if item.minimum_threshold > 0 else 100 %}
+                                            {% set percentage = 100 if percentage > 100 else percentage %}
+                                            <div class="progress-bar bg-{% if percentage == 0 %}danger{% else %}warning{% endif %}"
+                                                style="width: {{ percentage }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <td>
+                                    {% if item.current_quantity == 0 %}
+                                        <span class="badge bg-danger status-badge">Out of Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark status-badge">Low Stock</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>{{ item.unit }}</td>
+                                
+                                <td>
+                                    {% if item.supplier %}
+                                        <i class="fas fa-truck"></i> {{ item.supplier }}
+                                    {% else %}
+                                        <span class="text-muted">No supplier</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('edit_item', item_id=item.id) }}"
+                                           class="btn btn-outline-primary"
+                                           title="Edit & Restock">
+                                            <i class="fas fa-plus-circle"></i> Restock
+                                        </a>
+                                        
+                                        <a href="{{ url_for('edit_item', item_id=item.id) }}"
+                                           class="btn btn-outline-secondary"
+                                           title="Edit Item">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helpful Tips Card -->
+    <div class="card mt-4 border-info">
+        <div class="card-header bg-info text-white">
+            <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Quick Actions</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6><i class="fas fa-edit"></i> Update Stock Levels</h6>
+                    <p class="small text-muted">Click "Restock" or "Edit" to update quantities after receiving new inventory</p>
+                </div>
+                <div class="col-md-4">
+                    <h6><i class="fas fa-truck"></i> Contact Suppliers</h6>
+                    <p class="small text-muted">Supplier information is listed for each item. Place orders as needed</p>
+                </div>
+                <div class="col-md-4">
+                    <h6><i class="fas fa-download"></i> Export & Share</h6>
+                    <p class="small text-muted">Export this list to CSV and share with purchasing department</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- No Low Stock Items -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+            <h3 class="text-success">All Stocked Up!</h3>
+            <p class="text-muted">All inventory items are currently above their minimum threshold levels.</p>
+            <div class="mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Return to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+// Refresh low stock data every 60 seconds
+function refreshLowStockData() {
+    fetch('/api/stock_status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.low_stock_count === 0) {
+                // Optionally reload page if all items are now stocked
+                // location.reload();
+            }
+        })
+        .catch(error => console.log('Failed to update low stock status:', error));
+}
+
+// Refresh every 60 seconds
+setInterval(refreshLowStockData, 60000);
+</script>
+{% endblock %}
