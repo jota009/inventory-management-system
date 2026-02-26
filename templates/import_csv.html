@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Import CSV - Inventory{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item">Tools</li>
+        <li class="breadcrumb-item active" aria-current="page">Import CSV</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-10">

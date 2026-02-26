@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Low Stock Items - Inventory{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Low Stock Alert</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
@@ -145,14 +154,18 @@
                                     <div class="btn-group btn-group-sm">
                                         <a href="{{ url_for('edit_item', item_id=item.id) }}"
                                            class="btn btn-outline-primary"
-                                           title="Edit & Restock">
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
+                                           title="Restock this item">
                                             <i class="fas fa-plus-circle"></i> Restock
                                         </a>
                                         
                                         <a href="{{ url_for('edit_item', item_id=item.id) }}"
                                            class="btn btn-outline-secondary"
-                                           title="Edit Item">
-                                            <i class="fas fa-edit"></i>
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
+                                           title="Edit item details">
+                                            <i class="fas fa-edit"></i> Edit
                                         </a>
                                     </div>
                                 </td>

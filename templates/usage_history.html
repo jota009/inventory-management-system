@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Usage History - Inventory{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Usage History</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-history"></i> Usage History</h1>
+        <p class="text-muted">Track all inventory usage and withdrawals</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ history|length }}</h4>
+                        <p class="mb-0">Recent Transactions</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-list fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>
+                            {% set unique_items = history|map(attribute='item_id')|unique|list %}
+                            {{ unique_items|length }}
+                        </h4>
+                        <p class="mb-0">Items Used</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-boxes fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>
+                            {% set total_used = history|sum(attribute='quantity_used') %}
+                            {{ total_used }}
+                        </h4>
+                        <p class="mb-0">Total Units Used</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-filter"></i> Filters</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="itemFilter" class="form-label">Filter by Item</label>
+                <select class="form-select" id="itemFilter">
+                    <option value="">All Items</option>
+                    {% set unique_items = history|map(attribute='item_name')|unique|list %}
+                    {% for item_name in unique_items %}
+                        <option value="{{ item_name|lower }}">{{ item_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="categoryFilter" class="form-label">Filter by Category</label>
+                <select class="form-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    {% set unique_categories = history|map(attribute='category')|unique|list %}
+                    {% for category in unique_categories %}
+                        <option value="{{ category|lower }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="searchHistory" class="form-label">Search Notes</label>
+                <input type="text" class="form-control" id="searchHistory" placeholder="Search in notes...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usage History Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-table"></i> Recent Usage Events</h5>
+    </div>
+    <div class="card-body">
+        {% if history %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Quantity Used</th>
+                            <th>Remaining After</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in history %}
+                            <tr class="history-row"
+                                data-item-name="{{ entry.item_name|lower }}"
+                                data-category="{{ entry.category|lower }}"
+                                data-notes="{{ entry.notes|lower }}">
+                                <td>
+                                    <i class="fas fa-clock text-muted"></i>
+                                    {{ entry.date_used }}
+                                </td>
+                                <td>
+                                    <strong>{{ entry.item_name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ entry.category }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-minus"></i> {{ entry.quantity_used }} {{ entry.unit }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ entry.remaining_quantity }}</strong> {{ entry.unit }}
+                                </td>
+                                <td>
+                                    {% if entry.notes %}
+                                        <small class="text-muted">{{ entry.notes }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Usage History</h4>
+                <p class="text-muted">Start using items from your inventory to see usage history here</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Filter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemFilter = document.getElementById('itemFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const searchHistory = document.getElementById('searchHistory');
+        const historyRows = document.querySelectorAll('.history-row');
+
+        function filterTable() {
+            const itemValue = itemFilter.value.toLowerCase();
+            const categoryValue = categoryFilter.value.toLowerCase();
+            const searchValue = searchHistory.value.toLowerCase();
+
+            historyRows.forEach(row => {
+                const itemName = row.dataset.itemName;
+                const category = row.dataset.category;
+                const notes = row.dataset.notes;
+
+                const matchesItem = !itemValue || itemName === itemValue;
+                const matchesCategory = !categoryValue || category === categoryValue;
+                const matchesSearch = !searchValue || notes.includes(searchValue);
+
+                row.style.display = (matchesItem && matchesCategory && matchesSearch) ? '' : 'none';
+            });
+        }
+
+        itemFilter.addEventListener('change', filterTable);
+        categoryFilter.addEventListener('change', filterTable);
+        searchHistory.addEventListener('input', filterTable);
+    });
+</script>
+{% endblock %}

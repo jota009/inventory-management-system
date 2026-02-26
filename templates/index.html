@@ -2,6 +2,14 @@
 
 {% block title %}Dashboard - Printing Facility Inventory{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-home"></i> Dashboard</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
 <!-- ========================================
      CUSTOM STYLES FOR QUICK ADD SECTION
@@ -83,6 +91,19 @@
         /* Make font slightly bigger than default 'small' */
         font-size: 0.85rem;
     }
+
+    .clickable-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .clickable-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    .clickable-card:active {
+        transform: translateY(-1px);
+    }
 </style>
 
 <div class="row mb-4">
@@ -100,7 +121,7 @@
 <!-- Summary Cards -->
 <div class="row mb-4">
     <div class="col-md-4">
-        <div class="card text-white bg-primary">
+        <div class="card text-white bg-primary clickable-card" style="cursor: pointer;" data-filter="all">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
@@ -115,7 +136,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card text-white bg-warning">
+        <div class="card text-white bg-warning clickable-card" style="cursor: pointer;" data-filter="low-stock">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
@@ -130,7 +151,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card text-white bg-info">
+        <div class="card text-white bg-info clickable-card" style="cursor: pointer;" data-filter="categories">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
@@ -234,8 +255,12 @@
     <div class="col-md-6">
         <div class="input-group">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" id="searchInput" placeholder="Search items...">
+            <input type="text" class="form-control" id="searchInput" placeholder="Search by name, supplier, notes, or subcategory...">
+            <button class="btn btn-outline-secondary" type="button" id="clearSearch" style="display: none;">
+                <i class="fas fa-times"></i> Clear
+            </button>
         </div>
+        <small class="text-muted" id="searchResults" style="display: none;"></small>
     </div>
     <div class="col-md-6">
         <select class="form-select" id="categoryFilter">
@@ -259,13 +284,24 @@
                 <table class="table table-hover" id="inventoryTable">
                     <thead>
                         <tr>
-                            <th>Item Name</th>
-                            <th>Category</th>
+                            <th class="sortable" data-column="name" style="cursor: pointer;">
+                                Item Name <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="sortable" data-column="category" style="cursor: pointer;">
+                                Category <i class="fas fa-sort text-muted"></i>
+                            </th>
                             <th>Subcategory</th>
-                            <th>Stock Level</th>
-                            <th>Status</th>
+                            <th class="sortable" data-column="quantity" style="cursor: pointer;">
+                                Stock Level <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="sortable" data-column="status" style="cursor: pointer;">
+                                Status <i class="fas fa-sort text-muted"></i>
+                            </th>
                             <th>Unit</th>
-                            <th>Supplier</th>
+                            <th class="sortable" data-column="supplier" style="cursor: pointer;">
+                                Supplier <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th>Last Updated</th>
                             <th>Actions</th>
                         </tr>
                     <!--
@@ -287,7 +323,12 @@
                                 {% else %}good-stock
                                 {% endif %}"
                                 data-category="{{ item.category|lower }}"
-                                data-name="{{ item.name|lower }}">
+                                data-name="{{ item.name|lower }}"
+                                data-supplier="{{ (item.supplier or '')|lower }}"
+                                data-subcategory="{{ (item.subcategory or '')|lower }}"
+                                data-notes="{{ (item.notes or '')|lower }}"
+                                data-quantity="{{ item.current_quantity }}"
+                                data-status="{% if item.current_quantity == 0 %}0{% elif item.current_quantity <= item.minimum_threshold %}1{% else %}2{% endif %}">
 
                                 <td>
                                     <strong>{{ item.name }}</strong>
@@ -315,12 +356,8 @@
                                         <div class="progress" style="width: 60px; height: 8px;">
                                             {% set percentage = ((item.current_quantity / (item.minimum_threshold * 2)) * 100) if item.minimum_threshold > 0 else 100 %}
                                             {% set percentage = 100 if percentage > 100 else percentage %}
-                                            <div class="progress-bar
-                                                {% if percentage <= 25 %}bg-danger
-                                                {% elif percentage <= 50 %}bg-warning
-                                                {% else %}bg-success
-                                                {% endif %}"
-                                                style="width: {{ percentage }}%"></div>
+                                            {% set progress_class = 'bg-danger' if percentage <= 25 else 'bg-warning' if percentage <= 50 else 'bg-success' %}
+                                            <div class="progress-bar {{ progress_class }}" style="width: {{ percentage }}%"></div>
                                         </div>
                                     </div>
                                 </td>
@@ -340,34 +377,61 @@
                                 <td>{{ item.supplier or '-' }}</td>
 
                                 <td>
+                                    <small class="text-muted" data-bs-toggle="tooltip" title="{{ item.last_updated }}">
+                                        <i class="fas fa-clock"></i>
+                                        {% if item.last_updated %}
+                                            {{ item.last_updated[:10] }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </small>
+                                </td>
+
+                                <td>
                                     <div class="btn-group btn-group-sm">
-                                        <!-- USE ITEM BUTTON: Click to decrease quantity by 1 -->
-                                        <!-- Changed from <a href> link to <button onclick> for AJAX functionality -->
-                                        <!-- onclick: Calls JavaScript function useItem() with item details -->
-                                        <!-- data-* attributes: Store item information for JavaScript access -->
-                                        <button class="btn btn-outline-primary use-item-btn"
-                                           title="Use Item"
+                                        <!-- RESTOCK BUTTON: Click to increase quantity by 1 -->
+                                        <button class="btn btn-outline-success restock-item-btn"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
+                                           title="Add 1 {{ item.unit }}"
                                            type="button"
                                            data-item-id="{{ item.id }}"
                                            data-item-name="{{ item.name }}"
                                            data-item-quantity="{{ item.current_quantity }}"
                                            data-item-unit="{{ item.unit }}">
-                                            <i class="fas fa-minus"></i>
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+
+                                        <!-- USE ITEM BUTTON: Click to decrease quantity by 1 -->
+                                        <button class="btn btn-outline-primary use-item-btn"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
+                                           title="Use 1 {{ item.unit }}"
+                                           type="button"
+                                           data-item-id="{{ item.id }}"
+                                           data-item-name="{{ item.name }}"
+                                           data-item-quantity="{{ item.current_quantity }}"
+                                           data-item-unit="{{ item.unit }}">
+                                            <i class="fas fa-minus"></i> Use
                                         </button>
 
                                         <!-- EDIT ITEM LINK: Navigate to edit page -->
                                         <a href="{{ url_for('edit_item', item_id=item.id) }}"
                                            class="btn btn-outline-secondary"
-                                           title="Edit Item">
-                                            <i class="fas fa-edit"></i>
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
+                                           title="Edit item details">
+                                            <i class="fas fa-edit"></i> Edit
                                         </a>
 
                                         <!-- DELETE ITEM LINK: Navigate to delete with confirmation -->
                                         <a href="{{ url_for('delete_item', item_id=item.id) }}"
-                                           class="btn btn-outline-danger"
-                                           title="Delete Item"
-                                           onclick="return confirm('Are you sure you want to delete this item?')">
-                                            <i class="fas fa-trash"></i>
+                                           class="btn btn-outline-danger delete-item-btn"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
+                                           data-item-name="{{ item.name }}"
+                                           title="Delete this item permanently">
+                                            <i class="fas fa-trash"></i> Delete
                                         </a>
                                     </div>
                                 </td>
@@ -577,25 +641,149 @@
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('searchInput');
         const categoryFilter = document.getElementById('categoryFilter');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const searchResults = document.getElementById('searchResults');
         const tableRows = document.querySelectorAll('.inventory-item');
 
         function filterTable() {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedCategory = categoryFilter.value.toLowerCase();
+            let visibleCount = 0;
 
             tableRows.forEach(row => {
                 const name = row.dataset.name;
                 const category = row.dataset.category;
+                const supplier = row.dataset.supplier || '';
+                const subcategory = row.dataset.subcategory || '';
+                const notes = row.dataset.notes || '';
 
-                const matchesSearch = name.includes(searchTerm);
+                // Search across multiple fields
+                const matchesSearch = !searchTerm ||
+                    name.includes(searchTerm) ||
+                    supplier.includes(searchTerm) ||
+                    subcategory.includes(searchTerm) ||
+                    notes.includes(searchTerm);
                 const matchesCategory = !selectedCategory || category === selectedCategory;
 
-                row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+                if (matchesSearch && matchesCategory) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             });
+
+            // Show/hide clear button
+            clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+
+            // Show search results count
+            if (searchTerm || selectedCategory) {
+                searchResults.style.display = 'block';
+                searchResults.textContent = `Showing ${visibleCount} of ${tableRows.length} items`;
+            } else {
+                searchResults.style.display = 'none';
+            }
         }
 
         searchInput.addEventListener('input', filterTable);
         categoryFilter.addEventListener('change', filterTable);
+
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            filterTable();
+            searchInput.focus();
+        });
+
+        // Clickable summary cards
+        const summaryCards = document.querySelectorAll('.clickable-card');
+        summaryCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+
+                // Reset search and category filters
+                searchInput.value = '';
+                categoryFilter.value = '';
+
+                if (filter === 'all') {
+                    // Show all items
+                    tableRows.forEach(row => row.style.display = '');
+                    searchResults.style.display = 'none';
+                } else if (filter === 'low-stock') {
+                    // Show only low stock and out of stock items
+                    let visibleCount = 0;
+                    tableRows.forEach(row => {
+                        if (row.classList.contains('low-stock') || row.classList.contains('out-of-stock')) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    searchResults.style.display = 'block';
+                    searchResults.textContent = `Showing ${visibleCount} low stock items`;
+                } else if (filter === 'categories') {
+                    // Show all items (categories card just resets)
+                    tableRows.forEach(row => row.style.display = '');
+                    searchResults.style.display = 'none';
+                }
+
+                // Scroll to table
+                document.getElementById('inventoryTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // Table sorting
+        let currentSort = { column: null, direction: 'asc' };
+        const sortableHeaders = document.querySelectorAll('.sortable');
+
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.dataset.column;
+                const tbody = document.querySelector('#inventoryTable tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                // Toggle direction if same column, otherwise default to asc
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.direction = 'asc';
+                }
+
+                // Sort rows
+                rows.sort((a, b) => {
+                    let aValue, bValue;
+
+                    if (column === 'quantity') {
+                        aValue = parseInt(a.dataset.quantity);
+                        bValue = parseInt(b.dataset.quantity);
+                    } else if (column === 'status') {
+                        aValue = parseInt(a.dataset.status);
+                        bValue = parseInt(b.dataset.status);
+                    } else {
+                        aValue = a.dataset[column] || '';
+                        bValue = b.dataset[column] || '';
+                    }
+
+                    if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                // Re-append sorted rows
+                rows.forEach(row => tbody.appendChild(row));
+
+                // Update sort indicators
+                sortableHeaders.forEach(h => {
+                    const icon = h.querySelector('i');
+                    if (h === header) {
+                        icon.className = currentSort.direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+                    } else {
+                        icon.className = 'fas fa-sort text-muted';
+                    }
+                });
+            });
+        });
     });
 
     // Auto-refresh low stock badge
@@ -681,91 +869,196 @@
                 // ========================================
                 // STEP 3: Show confirmation dialog
                 // ========================================
-                // confirm() shows a browser dialog with OK/Cancel buttons
-                // Returns true if user clicks OK, false if Cancel
-                const confirmed = confirm(`Use 1 ${itemUnit} of ${itemName}?\n\nCurrent stock: ${currentQty} ${itemUnit}\nAfter use: ${currentQty - 1} ${itemUnit}`);
+                showConfirmModal(
+                    `Use 1 ${itemUnit} of ${itemName}?\n\nCurrent stock: ${currentQty} ${itemUnit}\nAfter use: ${currentQty - 1} ${itemUnit}`,
+                    function() {
+                        // Add loading state
+                        button.classList.add('btn-loading');
+                        button.disabled = true;
 
-                // If user clicked Cancel, stop here
-                if (!confirmed) {
-                    return;  // Exit function without doing anything
-                }
+                        // ========================================
+                        // STEP 4: Send AJAX POST request to server
+                        // ========================================
+                        // fetch() is the modern JavaScript way to send HTTP requests
+                        // It sends the request in the BACKGROUND (asynchronously)
+                        fetch(`/use_item/${itemId}`, {
+                            method: 'POST',  // HTTP POST method (for modifying data)
+                            headers: {
+                                'Content-Type': 'application/json'  // Tell server we're sending JSON
+                            },
+                            body: JSON.stringify({})  // Empty body (server knows to use quantity=1)
+                        })
+                        // ========================================
+                        // STEP 5: Handle server response
+                        // ========================================
+                        // .then() runs AFTER the server responds
+                        // "response" contains the server's HTTP response
+                        .then(response => {
+                            // Check if response is OK (status code 200-299)
+                            if (!response.ok) {
+                                // If not OK, throw error to trigger .catch() below
+                                throw new Error('Server returned error status');
+                            }
+                            // Parse JSON response body
+                            // This converts JSON text to a JavaScript object
+                            return response.json();
+                        })
+                        // This .then() runs AFTER the JSON is parsed
+                        // "data" is the JavaScript object from the server's JSON response
+                        .then(data => {
+                            // Check if server reports success
+                            if (data.success) {
+                                // ========================================
+                                // SUCCESS: Update the page
+                                // ========================================
 
-                // ========================================
-                // STEP 4: Send AJAX POST request to server
-                // ========================================
-                // fetch() is the modern JavaScript way to send HTTP requests
-                // It sends the request in the BACKGROUND (asynchronously)
-                fetch(`/use_item/${itemId}`, {
-                    method: 'POST',  // HTTP POST method (for modifying data)
-                    headers: {
-                        'Content-Type': 'application/json'  // Tell server we're sending JSON
+                                // Find the table row for this item
+                                // closest('tr') finds the nearest <tr> ancestor element
+                                const row = button.closest('tr');
+
+                                // Find the quantity display element in this row
+                                // querySelector finds the first element matching the selector
+                                const qtyElement = row.querySelector('td:nth-child(4) strong');
+
+                                // Update the displayed quantity with new value from server
+                                if (qtyElement) {
+                                    qtyElement.textContent = data.new_quantity;
+                                }
+
+                                // Update the status badge color based on new quantity
+                                updateStatusBadge(row, data.new_quantity, itemId);
+
+                                // Show success message to user
+                                showMessage(data.message, 'success');
+
+                                // Refresh the low stock badge in navbar
+                                refreshLowStockBadge();
+
+                                // Update the button's data attribute for next click
+                                button.dataset.itemQuantity = data.new_quantity;
+                                // Also update restock button's quantity
+                                const restockBtn = row.querySelector('.restock-item-btn');
+                                if (restockBtn) {
+                                    restockBtn.dataset.itemQuantity = data.new_quantity;
+                                }
+                            } else {
+                                // ========================================
+                                // FAILURE: Show error message
+                                // ========================================
+                                showMessage(data.message || 'Failed to use item', 'error');
+                            }
+                        })
+                        // .catch() runs if ANY error occurs above
+                        // "error" contains information about what went wrong
+                        .catch(error => {
+                            console.error('Error using item:', error);
+                            showMessage('Failed to use item. Please try again.', 'error');
+                        })
+                        .finally(() => {
+                            // Remove loading state
+                            button.classList.remove('btn-loading');
+                            button.disabled = false;
+                        });
                     },
-                    body: JSON.stringify({})  // Empty body (server knows to use quantity=1)
-                })
-                // ========================================
-                // STEP 5: Handle server response
-                // ========================================
-                // .then() runs AFTER the server responds
-                // "response" contains the server's HTTP response
-                .then(response => {
-                    // Check if response is OK (status code 200-299)
-                    if (!response.ok) {
-                        // If not OK, throw error to trigger .catch() below
-                        throw new Error('Server returned error status');
-                    }
-                    // Parse JSON response body
-                    // This converts JSON text to a JavaScript object
-                    return response.json();
-                })
-                // This .then() runs AFTER the JSON is parsed
-                // "data" is the JavaScript object from the server's JSON response
-                .then(data => {
-                    // Check if server reports success
-                    if (data.success) {
-                        // ========================================
-                        // SUCCESS: Update the page
-                        // ========================================
+                    'Use Item',
+                    'btn-primary'
+                );
+            });
+        });
 
-                        // Find the table row for this item
-                        // closest('tr') finds the nearest <tr> ancestor element
-                        const row = button.closest('tr');
+        // ========================================
+        // RESTOCK ITEM HANDLERS
+        // ========================================
+        const restockItemButtons = document.querySelectorAll('.restock-item-btn');
 
-                        // Find the quantity display element in this row
-                        // querySelector finds the first element matching the selector
-                        const qtyElement = row.querySelector('td:nth-child(4) strong');
+        restockItemButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const itemName = this.dataset.itemName;
+                const currentQty = parseInt(this.dataset.itemQuantity);
+                const itemUnit = this.dataset.itemUnit;
 
-                        // Update the displayed quantity with new value from server
-                        if (qtyElement) {
-                            qtyElement.textContent = data.new_quantity;
-                        }
+                showConfirmModal(
+                    `Add 1 ${itemUnit} to ${itemName}?\n\nCurrent stock: ${currentQty} ${itemUnit}\nAfter adding: ${currentQty + 1} ${itemUnit}`,
+                    function() {
+                        // Add loading state
+                        button.classList.add('btn-loading');
+                        button.disabled = true;
 
-                        // Update the status badge color based on new quantity
-                        updateStatusBadge(row, data.new_quantity, itemId);
+                        fetch(`/restock_item/${itemId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({quantity: 1})
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Server returned error status');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                const row = button.closest('tr');
+                                const qtyElement = row.querySelector('td:nth-child(4) strong');
 
-                        // Show success message to user
-                        showMessage(data.message, 'success');
+                                if (qtyElement) {
+                                    qtyElement.textContent = data.new_quantity;
+                                }
 
-                        // Refresh the low stock badge in navbar
-                        refreshLowStockBadge();
+                                updateStatusBadge(row, data.new_quantity, itemId);
+                                showMessage(data.message, 'success');
+                                refreshLowStockBadge();
 
-                        // Update the button's data attribute for next click
-                        button.dataset.itemQuantity = data.new_quantity;
-                    } else {
-                        // ========================================
-                        // FAILURE: Show error message
-                        // ========================================
-                        showMessage(data.message || 'Failed to use item', 'error');
-                    }
-                })
-                // .catch() runs if ANY error occurs above
-                // "error" contains information about what went wrong
-                .catch(error => {
-                    console.error('Error using item:', error);
-                    showMessage('Failed to use item. Please try again.', 'error');
-                });
+                                button.dataset.itemQuantity = data.new_quantity;
+                                const useBtn = row.querySelector('.use-item-btn');
+                                if (useBtn) {
+                                    useBtn.dataset.itemQuantity = data.new_quantity;
+                                }
+                            } else {
+                                showMessage(data.message || 'Failed to restock item', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error restocking item:', error);
+                            showMessage('Failed to restock item. Please try again.', 'error');
+                        })
+                        .finally(() => {
+                            // Remove loading state
+                            button.classList.remove('btn-loading');
+                            button.disabled = false;
+                        });
+                    },
+                    'Add Stock',
+                    'btn-success'
+                );
+            });
+        });
+
+        // ========================================
+        // DELETE ITEM HANDLERS
+        // ========================================
+        const deleteItemButtons = document.querySelectorAll('.delete-item-btn');
+
+        deleteItemButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const itemName = this.dataset.itemName;
+                const deleteUrl = this.href;
+
+                showConfirmModal(
+                    `Are you sure you want to delete "${itemName}"?\n\nThis action cannot be undone. All usage history for this item will also be deleted.`,
+                    function() {
+                        window.location.href = deleteUrl;
+                    },
+                    'Delete Item',
+                    'btn-danger'
+                );
             });
         });
     });
+
 
     /**
      * Update Status Badge

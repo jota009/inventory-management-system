@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Add Item - Inventory{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Add New Item</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
@@ -84,8 +93,21 @@
 </div>
 
 <script>
-// Allow custom category input
+// Show/hide subcategory dropdown based on category selection
 document.getElementById('category').addEventListener('change', function() {
+    const subcategoryRow = document.getElementById('subcategory_row');
+    const subcategorySelect = document.getElementById('subcategory');
+    
+    if (this.value === 'Spare Parts') {
+        subcategoryRow.style.display = 'block';
+        subcategorySelect.required = true;
+    } else {
+        subcategoryRow.style.display = 'none';
+        subcategorySelect.required = false;
+        subcategorySelect.value = '';
+    }
+    
+    // Handle custom category for "Other"
     if (this.value === 'Other') {
         const customInput = document.createElement('input');
         customInput.type = 'text';

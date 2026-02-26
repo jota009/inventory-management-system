@@ -258,10 +258,85 @@ def use_item(item_id):
         'item_id': item_id
     }), 200
 
+@app.route('/restock_item/<int:item_id>', methods=['POST'])
+def restock_item(item_id):
+    """
+    Restock Item Route - AJAX Endpoint
+
+    Purpose:
+        Handles one-click restocking of inventory items via AJAX POST request.
+        Increases item quantity by 1.
+
+    Returns:
+        JSON object with format:
+        {
+            "success": true/false,
+            "new_quantity": <number>,
+            "message": "<user message>",
+            "item_name": "<name>",
+            "item_id": <id>
+        }
+    """
+    item = get_item_by_id(item_id)
+
+    if not item:
+        return jsonify({
+            'success': False,
+            'message': 'Item not found'
+        }), 404
+
+    # Get quantity to add (default 1)
+    quantity_added = request.json.get('quantity', 1) if request.is_json else 1
+
+    # Calculate new quantity
+    new_quantity = item['current_quantity'] + quantity_added
+
+    # Update the inventory table
+    update_item_quantity(item_id, new_quantity)
+
+    return jsonify({
+        'success': True,
+        'new_quantity': new_quantity,
+        'message': f'Added {quantity_added} {item["unit"]} to {item["name"]}. New quantity: {new_quantity}',
+        'item_name': item['name'],
+        'item_id': item_id
+    }), 200
+
 @app.route('/low_stock')
 def low_stock():
     items = get_low_stock_items()
     return render_template('low_stock.html', items=items)
+
+@app.route('/usage_history')
+def usage_history():
+    conn = get_db_connection()
+    # Get all usage history with item details
+    history = conn.execute('''
+        SELECT uh.*, i.name as item_name, i.category, i.unit
+        FROM usage_history uh
+        JOIN inventory i ON uh.item_id = i.id
+        ORDER BY uh.date_used DESC
+        LIMIT 100
+    ''').fetchall()
+    conn.close()
+    return render_template('usage_history.html', history=history)
+
+@app.route('/usage_history/<int:item_id>')
+def item_usage_history(item_id):
+    item = get_item_by_id(item_id)
+    if not item:
+        flash('Item not found', 'error')
+        return redirect(url_for('index'))
+    
+    conn = get_db_connection()
+    history = conn.execute('''
+        SELECT * FROM usage_history
+        WHERE item_id = ?
+        ORDER BY date_used DESC
+    ''', (item_id,)).fetchall()
+    conn.close()
+    return render_template('item_usage_history.html', item=item, history=history)
+
 
 @app.route('/import_csv', methods=['GET', 'POST'])
 def import_csv():
