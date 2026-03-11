@@ -49,6 +49,42 @@ def init_db():
         )
     ''')
 
+    # Seed sample data if database is empty
+    c.execute('SELECT COUNT(*) FROM inventory')
+    if c.fetchone()[0] == 0:
+        sample_items = [
+            # Toner Cartridges for RICOH Pro C9200 (52K yield)
+            ('RICOH Type C9200 Toner - Black', 'Toner & Ink', '', 8, 4, 'cartridges', 'Ricoh Direct', '52,000 page yield for Pro C9200'),
+            ('RICOH Type C9200 Toner - Cyan', 'Toner & Ink', '', 3, 4, 'cartridges', 'Ricoh Direct', 'Low stock - 52K yield'),
+            ('RICOH Type C9200 Toner - Magenta', 'Toner & Ink', '', 5, 4, 'cartridges', 'Ricoh Direct', '52,000 page yield'),
+            ('RICOH Type C9200 Toner - Yellow', 'Toner & Ink', '', 4, 4, 'cartridges', 'Ricoh Direct', '52,000 page yield'),
+            # Paper Rolls for Continuous Feed
+            ('Xerographic Bond 22" x 500ft Roll', 'Paper & Media', '', 12, 6, 'rolls', 'Ricoh Consumables', '20lb rolls, 2 per carton'),
+            ('Xerographic Bond 36" x 500ft Roll', 'Paper & Media', '', 6, 3, 'rolls', 'Ricoh Consumables', '20lb 92 bright, wide format'),
+            ('Glossy Cover Stock 18" Roll', 'Paper & Media', '', 4, 2, 'rolls', 'Ricoh Consumables', 'For color brochures and marketing'),
+            # Machine Oil & Maintenance Supplies
+            ('Fuser Oil - Silicone Based', 'Machine Oil', '', 5, 3, 'bottles', 'Precision Roller Supply', '500ml bottles for fuser maintenance'),
+            ('Drive Gear Lubricant', 'Machine Oil', '', 3, 2, 'tubes', 'Precision Roller Supply', 'For internal mechanical components'),
+            # Spare Parts (High-wear consumables for Pro C9200)
+            ('Photo Conductor Drum M2059510', 'Spare Parts', 'PC Drum', 2, 3, 'pieces', 'Ricoh Direct', 'OEM drum for Pro C9200 - critical low stock'),
+            ('Fuser Unit Assembly C9200', 'Spare Parts', 'Fuser Roll', 1, 2, 'pieces', 'Ricoh Direct', 'Complete fuser assembly'),
+            ('Developer Unit - Black', 'Spare Parts', 'Developer Unit', 3, 2, 'pieces', 'Ricoh Direct', 'Developer for black toner'),
+            ('IBT Belt Transfer Unit', 'Spare Parts', 'Transfer Roller', 2, 2, 'pieces', 'Precision Roller Supply', 'Intermediate belt transfer'),
+            ('Feed Roller Assembly', 'Spare Parts', 'Feed Roller', 6, 3, 'pieces', 'Precision Roller Supply', 'Paper feed mechanism'),
+            ('Waste Toner Container', 'Spare Parts', 'Waste Toner Bottle', 10, 4, 'pieces', 'Ricoh Direct', 'Collects waste toner'),
+            # Cleaning Supplies
+            ('IPA Cleaning Solution 99%', 'Cleaning Supplies', '', 8, 4, 'bottles', 'Industrial Supply Co', '1L isopropyl alcohol for drum cleaning'),
+            ('Lint-Free Wipes Industrial', 'Cleaning Supplies', '', 20, 10, 'boxes', 'Industrial Supply Co', '200 wipes per box'),
+            ('Anti-Static Cleaning Kit', 'Cleaning Supplies', '', 12, 6, 'kits', 'Industrial Supply Co', 'Prevents static buildup on rollers'),
+            # Out of Stock Item (showcases alert system)
+            ('RICOH Type C9200 Toner - Yellow', 'Toner & Ink', '', 0, 4, 'cartridges', 'Ricoh Direct', 'OUT OF STOCK - urgent reorder needed'),
+        ]
+
+        c.executemany(
+            'INSERT INTO inventory (name, category, subcategory, current_quantity, minimum_threshold, unit, supplier, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            sample_items
+        )
+
     conn.commit()
     conn.close()
 
@@ -327,7 +363,7 @@ def item_usage_history(item_id):
     if not item:
         flash('Item not found', 'error')
         return redirect(url_for('index'))
-    
+
     conn = get_db_connection()
     history = conn.execute('''
         SELECT * FROM usage_history
