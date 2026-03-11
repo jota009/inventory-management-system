@@ -47,6 +47,13 @@ dmypy.json
 *.swp
 *.swo
 
+# Database files (SQLite)
+*.db
+*.db-journal
+*.db.backup*
+*.sqlite
+*.sqlite3
+
 # macOS cruft
 .DS_Store
 .AppleDouble
@@ -54,23 +61,17 @@ dmypy.json
 Icon?
 ._*
 
+# Cursor IDE
+.cursor/
+
 # VS Code: ignore most files but keep settings you actually want in repo
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
 
-# Project-specific: keep big media out of git by default
-music/*
-!music/.gitkeep
-
-# If you accidentally put audio elsewhere, ignore common formats
-# (Comment these out if you decide to track audio with Git LFS)
-*.mp3
-*.wav
-*.ogg
-
 # Development documentation (personal notes, not for repo)
 systeminstructions.md
 TECHSTACK.md
+migrate_add_subcategory.py
 
 # Keep README.md in git - it's the main project documentation
