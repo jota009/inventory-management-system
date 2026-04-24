@@ -7,7 +7,6 @@ This application provides real-time inventory tracking, automated low-stock aler
 ---
 
 ## 🎯 Key Features
-
 - **Real-Time Inventory Dashboard** - Visual overview with color-coded stock indicators and progress bars
 - **One-Click Usage Tracking** - AJAX-powered quick logging without page reloads
 - **Automated Low-Stock Alerts** - Notification badge and dedicated alert page for threshold monitoring
@@ -15,6 +14,15 @@ This application provides real-time inventory tracking, automated low-stock aler
 - **Search & Filter** - Real-time search across items with category filtering
 - **CSV Import/Export** - Bulk operations for inventory management and data backup
 - **Usage History Tracking** - Complete audit trail of all inventory changes with timestamps
+
+### Dashboard Overview
+![Inventory Dashboard](docs/screenshots/INVENMANAG-MOCK1MAIN.png)
+*Real-time inventory tracking with quick add materials and one-click usage*
+### Low Stock Alerts
+![Low Stock Page](docs/screenshots/INVENMANAG-LOW-STOCK.png)
+*Priority-based alerts for items requiring urgent attention*
+### Add Item Overview
+![Add Item Page](docs/screenshots/INVENMANAG-MOCK-ADD-ITEM.png)
 
 ---
 
