@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import sqlite3
-import csv
-import io
 import os
 from datetime import datetime
 
@@ -374,80 +372,6 @@ def item_usage_history(item_id):
     return render_template('item_usage_history.html', item=item, history=history)
 
 
-@app.route('/import_csv', methods=['GET', 'POST'])
-def import_csv():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file selected', 'error')
-            return redirect(request.url)
-
-        file = request.files['file']
-        if file.filename == '':
-            flash('No file selected', 'error')
-            return redirect(request.url)
-
-        if file and file.filename.endswith('.csv'):
-            try:
-                stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-                csv_reader = csv.DictReader(stream)
-
-                conn = get_db_connection()
-                imported_count = 0
-
-                for row in csv_reader:
-                    name = row.get('name', '').strip()
-                    category = row.get('category', 'General').strip()
-                    current_quantity = int(row.get('current_quantity', 0))
-                    minimum_threshold = int(row.get('minimum_threshold', 0))
-                    unit = row.get('unit', 'pieces').strip()
-                    supplier = row.get('supplier', '').strip()
-                    notes = row.get('notes', '').strip()
-
-                    if name:  # Only import if name is provided
-                        conn.execute(
-                            'INSERT INTO inventory (name, category, current_quantity, minimum_threshold, unit, supplier, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (name, category, current_quantity, minimum_threshold, unit, supplier, notes)
-                        )
-                        imported_count += 1
-
-                conn.commit()
-                conn.close()
-
-                flash(f'Successfully imported {imported_count} items!', 'success')
-                return redirect(url_for('index'))
-
-            except Exception as e:
-                flash(f'Error importing CSV: {str(e)}', 'error')
-        else:
-            flash('Please upload a CSV file', 'error')
-
-    return render_template('import_csv.html')
-
-@app.route('/export_csv')
-def export_csv():
-    items = get_all_items()
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-
-    # Write header
-    writer.writerow(['name', 'category', 'current_quantity', 'minimum_threshold', 'unit', 'supplier', 'notes'])
-
-    # Write data
-    for item in items:
-        writer.writerow([
-            item['name'], item['category'], item['current_quantity'],
-            item['minimum_threshold'], item['unit'], item['supplier'], item['notes']
-        ])
-
-    output.seek(0)
-
-    from flask import Response
-    return Response(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment; filename=inventory_export_{datetime.now().strftime("%Y%m%d")}.csv'}
-    )
 
 @app.route('/delete_item/<int:item_id>')
 def delete_item(item_id):
